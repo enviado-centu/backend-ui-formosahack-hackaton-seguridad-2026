@@ -1,6 +1,6 @@
 """Scan database model."""
 
-from sqlalchemy import Column, Integer, String, DateTime, Float, JSON, ForeignKey, Text
+from sqlalchemy import Column, Integer, String, DateTime, Float, JSON, ForeignKey
 from sqlalchemy.orm import relationship
 
 from ..core.database import Base, utcnow
@@ -13,7 +13,7 @@ class Scan(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     scan_uuid = Column(String, unique=True, index=True, nullable=False)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     
     url = Column(String, nullable=False)
     domain = Column(String, nullable=False)
@@ -31,7 +31,7 @@ class Scan(Base):
     
     page_data = Column(JSON)
     
-    created_at = Column(DateTime, default=utcnow)
-    completed_at = Column(DateTime)
+    created_at = Column(DateTime(timezone=True), default=utcnow, nullable=False)
+    completed_at = Column(DateTime(timezone=True))
     
     user = relationship("User", back_populates="scans")

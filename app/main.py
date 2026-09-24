@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .core.config import settings
-from .core.database import init_db, close_db
+from .core.database import close_db
 from .api import auth, scans, health
 
 logging.basicConfig(
@@ -20,10 +20,9 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan events."""
+    # Las tablas las crea Alembic (alembic upgrade head), no la aplicación
     logger.info("Starting application...")
-    await init_db()
-    logger.info("Database initialized")
-    
+
     yield
     
     logger.info("Shutting down application...")

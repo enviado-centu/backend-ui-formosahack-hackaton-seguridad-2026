@@ -25,7 +25,10 @@ class Settings(BaseSettings):
     ENVIRONMENT: Literal["development", "production"] = "development"
     DEBUG: bool = False
 
-    DATABASE_URL: str = "sqlite+aiosqlite:///./backend.db"
+    # Obligatoria. Ej.: postgresql+asyncpg://detector:<clave>@localhost:5432/detector
+    DATABASE_URL: str
+    # Base separada para pytest; si no está o no responde, los tests usan SQLite en memoria
+    TEST_DATABASE_URL: Optional[str] = None
 
     SECRET_KEY: Optional[str] = None
     ALGORITHM: str = "HS256"

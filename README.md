@@ -39,34 +39,87 @@ Browser Extension / Mobile App / Dashboard
 - ✅ Health checks
 - ✅ Documentación OpenAPI automática
 
+## Requisitos
+
+- Python 3.13
+- PostgreSQL 16 o superior: con Docker Desktop (recomendado) o instalado localmente
+- Los repos hermanos clonados al lado de este, en la misma carpeta:
+  `MODULO-PY/` (motor de reglas y modelo) y `kev-integration/` (cliente de Kev)
+
+Todos los comandos son para **PowerShell en Windows** y se corren **desde la carpeta del backend**
+(el `.env` se lee desde la carpeta actual).
+
 ## Instalación
 
-```bash
-cd backend
+```powershell
+py -3.13 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements-dev.txt   # requirements.txt + pytest (usá requirements.txt en producción)
 
-# Crear entorno virtual
-python -m venv venv
-source venv/bin/activate  # Linux/Mac
-# o
-venv\Scripts\activate  # Windows
-
-# Instalar dependencias
-pip install -r requirements.txt
-
-# Configurar variables de entorno
-cp .env.example .env
-# Editar .env con tus valores
+copy .env.example .env
 ```
+
+Editá `.env`:
+
+- `POSTGRES_PASSWORD`: una clave cualquiera; poné **la misma** en `DATABASE_URL` y `TEST_DATABASE_URL`.
+- `SECRET_KEY`: generala con `python -c "import secrets; print(secrets.token_urlsafe(64))"`.
+  Si la dejás vacía en `ENVIRONMENT=development`, el backend genera una temporal y avisa
+  (los tokens dejan de valer al reiniciar). En `ENVIRONMENT=production` es obligatoria.
+
+## Base de datos (PostgreSQL)
+
+### Opción A: con Docker
+
+```powershell
+docker compose up -d                  # postgres:16 con volumen persistente "pgdata"
+docker compose ps                     # esperar a que diga "healthy"
+alembic upgrade head                  # crea las tablas
+```
+
+La primera vez que arranca el volumen se crea también la base de tests `detector_test`.
+
+Si ya tenés un PostgreSQL instalado escuchando en el 5432, poné `POSTGRES_PORT=5433` en `.env`
+y cambiá `:5432` por `:5433` en `DATABASE_URL` y `TEST_DATABASE_URL`.
+
+### Opción B: sin Docker (PostgreSQL instalado localmente)
+
+1. Instalá PostgreSQL desde https://www.postgresql.org/download/windows/ (anotá la clave del usuario `postgres`).
+2. Creá el rol `detector` y las bases `detector` y `detector_test` (te pide la clave de `postgres`):
+
+   ```powershell
+   $clave = (Select-String -Path .env -Pattern '^POSTGRES_PASSWORD=(.*)').Matches.Groups[1].Value
+   & "C:\Program Files\PostgreSQL\18\bin\psql.exe" -U postgres -v clave=$clave -f scripts\crear_db_local.sql
+   ```
+
+   (Cambiá `18` por tu versión.) El script se puede correr más de una vez.
+3. `alembic upgrade head`
+
+### Migraciones
+
+- Las tablas las crea **solo Alembic**; la aplicación no hace `create_all`.
+- Nueva migración después de cambiar un modelo: `alembic revision --autogenerate -m "descripcion"`,
+  revisarla a mano y `alembic upgrade head`.
+- `alembic check` confirma que los modelos y la base coinciden.
+
+Antes el backend usaba SQLite (`backend.db`). No había datos que conservar, así que no hay nada que migrar.
 
 ## Ejecución
 
-```bash
-# Iniciar servidor
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-
-# O con más workers
-uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4
+```powershell
+uvicorn app.main:app --reload --port 8000
 ```
+
+Documentación: http://localhost:8000/docs
+
+## Tests
+
+```powershell
+pytest
+```
+
+Si `TEST_DATABASE_URL` responde, los tests corren contra esa base PostgreSQL (se le aplican las
+migraciones con Alembic). Si no, usan SQLite en memoria. La primera línea de la salida de pytest
+dice cuál se usó.
 
 ## API Endpoints
 
@@ -166,8 +219,12 @@ backend/
 │   └── integrations/       # Integraciones externas
 │       ├── kev/
 │       └── modulo_py/
+├── alembic/              # Migraciones
+├── scripts/              # SQL para PostgreSQL local e init del contenedor
 ├── tests/
+├── docker-compose.yml
 ├── requirements.txt
+├── requirements-dev.txt
 ├── .env.example
 └── README.md
 ```
@@ -185,29 +242,17 @@ backend/
 
 ## Configuración
 
-Variables de entorno en `.env`:
-
-```bash
-DATABASE_URL=sqlite+aiosqlite:///./backend.db
-SECRET_KEY=your-secret-key
-KEV_BASE_URL=http://localhost:8009
-KEV_TIMEOUT=30
-```
+Todas las variables están documentadas en `.env.example`.
 
 ## Dependencias
 
 - FastAPI - Web framework
-- SQLAlchemy - ORM
+- SQLAlchemy (async) + asyncpg - ORM y driver de PostgreSQL
+- Alembic - Migraciones
 - Pydantic - Validación
 - python-jose - JWT
 - passlib - Password hashing
 - httpx - HTTP client
-
-## Tests
-
-```bash
-pytest tests/ -v
-```
 
 ## Licencia
 

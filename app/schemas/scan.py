@@ -1,7 +1,7 @@
 """Scan schemas."""
 
 from typing import Optional, Dict, Any, List
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from datetime import datetime
 
 
@@ -98,8 +98,7 @@ class ScanResponse(BaseModel):
     created_at: str
     completed_at: Optional[str] = None
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ScanListItem(BaseModel):
@@ -113,5 +112,4 @@ class ScanListItem(BaseModel):
     classification_type: Optional[str] = None
     created_at: str
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
