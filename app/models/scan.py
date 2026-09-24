@@ -30,6 +30,7 @@ class Scan(Base):
     ml_result = Column(JSON)
     
     page_data = Column(JSON)
+    summary = Column(JSON)
     
     created_at = Column(DateTime(timezone=True), default=utcnow, nullable=False)
     completed_at = Column(DateTime(timezone=True))

@@ -34,9 +34,12 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24
 
-    KEV_BASE_URL: str = "http://localhost:8009"
+    KEV_BASE_URL: str = "http://127.0.0.1:8009"
     KEV_MODEL: str = "kev-latest"
-    KEV_TIMEOUT: int = 30
+    # Corto a propósito: si Kev no responde, el escaneo sigue sin esperar
+    KEV_TIMEOUT: int = 3
+    # Carpeta del repo kev-integration; por defecto se busca al lado del backend
+    KEV_INTEGRATION_PATH: Optional[str] = None
 
     CORS_ORIGINS: list[str] = ["http://localhost:5173"]
 

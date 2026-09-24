@@ -1,15 +1,16 @@
 """Scan schemas."""
 
-from typing import Optional, Dict, Any, List
-from pydantic import BaseModel, ConfigDict, Field, field_validator
-from datetime import datetime
+from typing import Optional, Dict, Any, List, Literal
+from urllib.parse import urlsplit
+
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
 class PageDataRequest(BaseModel):
     """Page data for scan request."""
     
     url: str = Field(..., description="Full URL of the page")
-    domain: str = Field(..., description="Domain name")
+    domain: Optional[str] = Field(None, description="Domain name (si falta, se toma de la URL)")
     title: Optional[str] = Field(None, description="Page title", max_length=500)
     visible_text: Optional[str] = Field(None, description="Visible text content", max_length=10000)
     dom: Optional[str] = Field(None, description="DOM/HTML content", max_length=100000)
@@ -30,9 +31,20 @@ class PageDataRequest(BaseModel):
     @field_validator("domain")
     @classmethod
     def validate_domain(cls, v):
-        if len(v) > 253:
+        if v is not None and len(v) > 253:
             raise ValueError("Domain too long")
         return v
+
+    @model_validator(mode="after")
+    def completar_domain(self):
+        if not self.domain:
+            try:
+                self.domain = urlsplit(self.url).hostname or ""
+            except ValueError:
+                self.domain = ""
+        if not self.domain:
+            raise ValueError("La URL no tiene un nombre de sitio válido")
+        return self
 
 
 class ScanRequest(BaseModel):
@@ -65,9 +77,10 @@ class RulesSignals(BaseModel):
 class MLSignals(BaseModel):
     """ML engine signals."""
     available: bool
-    score: Optional[float] = None
-    prediction: Optional[int] = None
-    confidence: Optional[float] = None
+    score: Optional[float] = Field(None, description="Probabilidad de phishing según el modelo (0-1)")
+    is_suspicious: Optional[bool] = Field(None, description="score >= threshold")
+    threshold: Optional[float] = None
+    top_features: List[Dict[str, Any]] = []
     model_name: Optional[str] = None
     error: Optional[str] = None
 
@@ -78,6 +91,20 @@ class RiskAssessment(BaseModel):
     level: str
     classification_type: Optional[str] = None
     classification_probability: Optional[float] = None
+
+
+RiskLevel = Literal["low", "medium", "high"]
+
+
+class ScanSummary(BaseModel):
+    """Diagnóstico listo para mostrar (lo arma risk_service)."""
+    score_100: int = Field(..., ge=0, le=100)
+    level: RiskLevel
+    source: Literal["lista_negra", "sitio_oficial", "analisis"]
+    reasons: List[str] = []
+    tip: str
+    brand: Optional[str] = Field(None, description="Marca que el sitio parece imitar")
+    official_brand: Optional[str] = Field(None, description="Marca de la que es sitio oficial")
 
 
 class ScanSignals(BaseModel):
@@ -95,6 +122,7 @@ class ScanResponse(BaseModel):
     risk: RiskAssessment
     classification: Dict[str, Any]
     signals: ScanSignals
+    summary: Optional[ScanSummary] = None
     created_at: str
     completed_at: Optional[str] = None
     
