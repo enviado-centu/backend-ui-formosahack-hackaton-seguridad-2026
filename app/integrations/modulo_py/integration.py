@@ -31,6 +31,7 @@ except (ImportError, FileNotFoundError) as e:
     logger.warning(f"MODULO-PY features not available: {e}")
     FEATURES_AVAILABLE = False
 
+PREDICT_ERROR: Optional[str] = None
 try:
     from predict import predecir
     PREDICT_AVAILABLE = True
@@ -38,6 +39,7 @@ try:
 except (ImportError, FileNotFoundError) as e:
     logger.warning(f"MODULO-PY predict not available: {e}")
     PREDICT_AVAILABLE = False
+    PREDICT_ERROR = str(e)
 
 
 class ModuloPyIntegration:
@@ -47,6 +49,7 @@ class ModuloPyIntegration:
         self.motor_available = MOTOR_AVAILABLE
         self.features_available = FEATURES_AVAILABLE
         self.predict_available = PREDICT_AVAILABLE
+        self.predict_error = PREDICT_ERROR
         
         if MOTOR_AVAILABLE:
             logger.info("MODULO-PY motor initialized")

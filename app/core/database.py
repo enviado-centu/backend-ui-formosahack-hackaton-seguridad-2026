@@ -1,5 +1,7 @@
 """Database configuration and session management."""
 
+from datetime import datetime, timezone
+
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy.orm import DeclarativeBase
 
@@ -21,6 +23,11 @@ async_session = async_sessionmaker(
 class Base(DeclarativeBase):
     """Base class for all database models."""
     pass
+
+
+def utcnow() -> datetime:
+    """Fecha y hora actual en UTC (con zona horaria)."""
+    return datetime.now(timezone.utc)
 
 
 async def get_db() -> AsyncSession:

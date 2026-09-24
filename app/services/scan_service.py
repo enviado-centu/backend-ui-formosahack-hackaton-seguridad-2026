@@ -2,7 +2,7 @@
 
 import uuid
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Optional
 
 from sqlalchemy import select
@@ -73,7 +73,7 @@ class ScanService:
             scan.kev_result = kev_signals.model_dump()
             scan.rules_result = rules_signals.model_dump()
             scan.ml_result = ml_signals.model_dump()
-            scan.completed_at = datetime.utcnow()
+            scan.completed_at = datetime.now(timezone.utc)
             
             await self.db.commit()
             await self.db.refresh(scan)

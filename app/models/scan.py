@@ -1,10 +1,9 @@
 """Scan database model."""
 
-from datetime import datetime
 from sqlalchemy import Column, Integer, String, DateTime, Float, JSON, ForeignKey, Text
 from sqlalchemy.orm import relationship
 
-from ..core.database import Base
+from ..core.database import Base, utcnow
 
 
 class Scan(Base):
@@ -32,7 +31,7 @@ class Scan(Base):
     
     page_data = Column(JSON)
     
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=utcnow)
     completed_at = Column(DateTime)
     
     user = relationship("User", back_populates="scans")
