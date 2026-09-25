@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .core.config import settings
 from .core.database import close_db
-from .api import auth, scans, health
+from .api import auth, scans, health, public
 
 logging.basicConfig(
     level=logging.INFO,
@@ -48,6 +48,7 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(scans.router)
 app.include_router(health.router)
+app.include_router(public.router)
 
 
 @app.get("/")

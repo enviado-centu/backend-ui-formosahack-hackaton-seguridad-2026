@@ -21,6 +21,7 @@ if str(MODULO_PY_PATH) not in sys.path:
 try:
     from motor.reglas import evaluar_reglas
     from motor.listas import cargar_lista_blanca, es_oficial, esta_en_lista_negra
+    from features import dominio_registrable
     MOTOR_AVAILABLE = True
     logger.info("MODULO-PY motor loaded successfully")
 except ImportError as e:
@@ -63,6 +64,15 @@ class ModuloPyIntegration:
     def nombre_marca(self, marca_id: str) -> str:
         """Nombre legible de una marca de la lista blanca (ej. "Banco Nación")."""
         return cargar_lista_blanca()[marca_id]["nombre"]
+
+    def dominio(self, url: str) -> str:
+        """Dominio registrable de la URL (ej. bna.com.ar); "" si no se puede obtener."""
+        if not self.motor_available:
+            return ""
+        try:
+            return dominio_registrable(url)
+        except ValueError:
+            return ""
 
     def analyze_rules(self, url: str) -> RulesSignals:
         """Analyze URL using the motor rules engine."""
