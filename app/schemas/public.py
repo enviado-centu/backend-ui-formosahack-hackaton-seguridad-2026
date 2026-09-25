@@ -45,3 +45,18 @@ class AnalizarPublicoResponse(BaseModel):
     url: str
     dominio: str
     summary: ScanSummary
+
+
+class MarcaPublica(BaseModel):
+    """Marca de la lista blanca con sus dominios registrables oficiales."""
+
+    id: str
+    nombre: str
+    dominios: list[str]
+
+
+class ListaBlancaPublica(BaseModel):
+    """Lista blanca para que la extensión resuelva localmente los sitios oficiales."""
+
+    version: str = Field(..., description="Hash corto del contenido: cambia solo si cambian las marcas")
+    marcas: list[MarcaPublica]

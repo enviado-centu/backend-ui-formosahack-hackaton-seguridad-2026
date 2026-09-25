@@ -65,6 +65,12 @@ class ModuloPyIntegration:
         """Nombre legible de una marca de la lista blanca (ej. "Banco Nación")."""
         return cargar_lista_blanca()[marca_id]["nombre"]
 
+    def lista_blanca(self) -> dict:
+        """Marcas oficiales {id: datos} tal como las carga el motor."""
+        if not self.motor_available:
+            raise RuntimeError("El motor de MODULO-PY no está disponible")
+        return cargar_lista_blanca()
+
     def dominio(self, url: str) -> str:
         """Dominio registrable de la URL (ej. bna.com.ar); "" si no se puede obtener."""
         if not self.motor_available:
