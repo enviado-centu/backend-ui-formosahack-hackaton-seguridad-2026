@@ -2,15 +2,17 @@
 
 import logging
 
-from fastapi import APIRouter, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from starlette.concurrency import run_in_threadpool
 
+from ..core.rate_limit import limitar_publico
 from ..schemas.public import AnalizarPublicoRequest, AnalizarPublicoResponse, ListaBlancaPublica
 from ..services.public_service import analizar_publico, lista_blanca_publica
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/public", tags=["public"])
+# El límite corre antes de validar el body: los pedidos inválidos también cuentan
+router = APIRouter(prefix="/public", tags=["public"], dependencies=[Depends(limitar_publico)])
 
 CACHE_LISTA_BLANCA = "max-age=3600"
 

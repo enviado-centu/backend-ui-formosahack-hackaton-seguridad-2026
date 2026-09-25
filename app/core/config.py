@@ -4,7 +4,7 @@ import logging
 import secrets
 from typing import Literal, Optional
 
-from pydantic import model_validator
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 logger = logging.getLogger(__name__)
@@ -44,6 +44,9 @@ class Settings(BaseSettings):
     CORS_ORIGINS: list[str] = ["http://localhost:5173"]
 
     MAX_PAYLOAD_SIZE: int = 10 * 1024 * 1024
+
+    # Pedidos por minuto y por IP a /public/* (en memoria, por proceso)
+    PUBLIC_RATE_LIMIT_PER_MIN: int = Field(60, ge=1)
 
     @model_validator(mode="after")
     def check_secret_key(self) -> "Settings":
